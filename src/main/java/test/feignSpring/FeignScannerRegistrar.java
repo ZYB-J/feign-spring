@@ -1,8 +1,10 @@
 package test.feignSpring;
 
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
+import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.StringUtils;
 
@@ -15,15 +17,18 @@ import java.util.List;
  * 查看{@link FeignScan}
  *
  */
-public class FeignScannerRegistrar implements ImportBeanDefinitionRegistrar {
+public class FeignScannerRegistrar implements ImportBeanDefinitionRegistrar , EnvironmentAware {
     private Class<? extends Annotation> annotationClass=FeignClient.class ;//只扫描带此注解的接口
 
+
+    private Environment environment;
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
         AnnotationAttributes annoAttrs = AnnotationAttributes.fromMap(importingClassMetadata.getAnnotationAttributes(FeignScan.class.getName()));
         ClasspathFeignScanner scanner = new ClasspathFeignScanner(registry);
         scanner.setAnnotationClass(annotationClass);
+        scanner.setEnvironment(environment);
 
         String[] var1 = annoAttrs.getStringArray("basePackages");
         List<String> basePackages = new ArrayList();
@@ -40,5 +45,8 @@ public class FeignScannerRegistrar implements ImportBeanDefinitionRegistrar {
     }
 
 
-
+    @Override
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
+    }
 }

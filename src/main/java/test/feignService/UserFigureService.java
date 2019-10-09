@@ -11,7 +11,7 @@ import test.feignSpring.FeignClient;
 /**
  * Created by zhouyongbo on 2019/9/9.
  */
-@FeignClient(url="http://test.com")
+@FeignClient(url="${url}")
 public interface UserFigureService {
     @RequestLine("POST /api/listHeadCategorys")
     @Headers({ContentType.JSON})

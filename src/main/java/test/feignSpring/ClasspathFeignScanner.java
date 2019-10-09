@@ -6,10 +6,14 @@ import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.context.annotation.ScannedGenericBeanDefinition;
+import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
+import org.springframework.util.StringUtils;
 
 import java.lang.annotation.Annotation;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Map;
 import java.util.Set;
 
@@ -77,7 +81,8 @@ public class ClasspathFeignScanner extends ClassPathBeanDefinitionScanner {
             System.out.println(FeignClient.class.getCanonicalName());
             System.out.println(FeignClient.class.getName());
             Map<String, Object> attributes = metadata.getAnnotationAttributes(FeignClient.class.getCanonicalName());
-            String url = (String)attributes.get("url");
+            String url = getUrl(attributes);
+            logger.info("exec url:"+url);
             // the mapper interface is the original class of the bean
             // but, the actual class of the bean is MapperFactoryBean
             definition.getConstructorArgumentValues().addGenericArgumentValue(definition.getBeanClassName()); // 把注解的类名注入到feignClientFactoryBean 的构造方法
@@ -120,4 +125,27 @@ public class ClasspathFeignScanner extends ClassPathBeanDefinitionScanner {
     }
 
 
+    private String resolve(String value) {
+        Environment environment = getEnvironment();
+        if (StringUtils.hasText(value)) {
+            return environment.resolvePlaceholders(value);
+        }
+        return value;
+    }
+
+    private String getUrl(Map<String, Object> attributes) {
+        String url = resolve((String) attributes.get("url"));
+        if (StringUtils.hasText(url) && !(url.startsWith("${") && url.contains("}"))) {
+            if (!url.contains("://")) {
+                url = "http://" + url;
+            }
+            try {
+                new URL(url);
+            }
+            catch (MalformedURLException e) {
+                throw new IllegalArgumentException(url + " is malformed", e);
+            }
+        }
+        return url;
+    }
 }
