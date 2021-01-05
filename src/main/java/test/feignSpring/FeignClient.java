@@ -13,4 +13,13 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface FeignClient {
     String url();
+    Class<?> fallback() default void.class;
+    Class<?> fallbackFactory() default void.class;
+
+    /**
+     * multiple http status code
+     * delimiter comma ,for example: 403,500,321
+     * @return
+     */
+    String retryStatusCode() default "";
 }

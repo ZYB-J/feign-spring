@@ -1,0 +1,27 @@
+<configuration>
+
+    <property name="env" value="${env}" />
+    <if condition='property("env").contains("test")'>
+        <then>
+            <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+                <layout class="ch.qos.logback.classic.PatternLayout">
+                    <Pattern>[crius-1.0] [%d{yyyy-MM-dd HH:mm:ss S}]  [%c] [%t] [%p]  %msg  %ex %n</Pattern>
+                </layout>
+            </appender>
+            <root level="info">
+                <appender-ref ref="CONSOLE"/>
+            </root>
+        </then>
+        <else>
+            <appender name="CONSOLE" class="test.logback.KafkaAppender">
+                <bootstrapServers>123.123.11.11</bootstrapServers>
+                <layout class="ch.qos.logback.classic.PatternLayout">
+                    <Pattern>[crius-1.0] [%d{yyyy-MM-dd HH:mm:ss S}]  [%c] [%t] [%p]  %msg  %ex %n</Pattern>
+                </layout>
+            </appender>
+            <root level="info">
+                <appender-ref ref="CONSOLE"/>
+            </root>
+        </else>
+    </if>
+</configuration>

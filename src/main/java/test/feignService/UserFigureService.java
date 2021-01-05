@@ -11,14 +11,19 @@ import test.feignSpring.FeignClient;
 /**
  * Created by zhouyongbo on 2019/9/9.
  */
-@FeignClient(url="${url}")
+@FeignClient(url="${url}",retryStatusCode = "500")
 public interface UserFigureService {
     @RequestLine("POST /api/listHeadCategorys")
-    @Headers({ContentType.JSON})
-    String listHeadCategorys(TestRequest params);
+    //@Headers({ContentType.JSON})
+    TestFeignRequestBean listHeadCategorys(TestRequest params);
 
-    @RequestLine("POST /health/testFeigh")
+    @RequestLine("POST /api/listHeadCategorys")
     @Headers(ContentType.URLENCODED)
     String test(TestFeignRequestBean request);
+
+
+    @RequestLine("POST /api/listHeadCategorys")
+    @Headers({ContentType.JSON})
+    String listHeadCategorys2(TestRequest params);
 
 }

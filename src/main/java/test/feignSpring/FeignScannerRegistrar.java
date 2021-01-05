@@ -1,5 +1,6 @@
 package test.feignSpring;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
@@ -17,6 +18,7 @@ import java.util.List;
  * 查看{@link FeignScan}
  *
  */
+@Slf4j
 public class FeignScannerRegistrar implements ImportBeanDefinitionRegistrar , EnvironmentAware {
     private Class<? extends Annotation> annotationClass=FeignClient.class ;//只扫描带此注解的接口
 
@@ -25,6 +27,7 @@ public class FeignScannerRegistrar implements ImportBeanDefinitionRegistrar , En
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+        log.info("registerBeanDefinitions importingClassMetadata:"+ importingClassMetadata.getClassName());
         AnnotationAttributes annoAttrs = AnnotationAttributes.fromMap(importingClassMetadata.getAnnotationAttributes(FeignScan.class.getName()));
         ClasspathFeignScanner scanner = new ClasspathFeignScanner(registry);
         scanner.setAnnotationClass(annotationClass);

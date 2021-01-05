@@ -9,6 +9,7 @@ import org.springframework.context.annotation.ScannedGenericBeanDefinition;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.lang.annotation.Annotation;
@@ -27,7 +28,7 @@ public class ClasspathFeignScanner extends ClassPathBeanDefinitionScanner {
     /**
      * 过滤不是没有被FeignClient 注解作用的接口
      */
-    private Class<? extends Annotation> annotationClass ;
+    private Class<? extends Annotation> annotationClass;
 
     private FeignClientFactoryBean feignClientFactoryBean = new FeignClientFactoryBean();
 
@@ -40,10 +41,10 @@ public class ClasspathFeignScanner extends ClassPathBeanDefinitionScanner {
 
         if (this.annotationClass != null) {
             this.addIncludeFilter(new AnnotationTypeFilter(this.annotationClass));
-        }else{
+        } else {
             throw new IllegalArgumentException("feign标记接口为空:FeignClient");
         }
-        addIncludeFilter(new AnnotationTypeFilter(FeignScan.class));
+        addExcludeFilter(new AnnotationTypeFilter(Component.class));
 
 
     }
@@ -52,42 +53,48 @@ public class ClasspathFeignScanner extends ClassPathBeanDefinitionScanner {
     protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
 
         Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
-        if(beanDefinitions.isEmpty()){
+        if (beanDefinitions.isEmpty()) {
             logger.warn("no feign client definition");
-        }else{
+        } else {
             processBeanDefinitions(beanDefinitions);
         }
         return beanDefinitions;
     }
 
 
-
     private void processBeanDefinitions(Set<BeanDefinitionHolder> beanDefinitions) {
-        //GenericBeanDefinition definition;
-        //AnnotatedBeanDefinition definition;
         ScannedGenericBeanDefinition definition;
         for (BeanDefinitionHolder holder : beanDefinitions) {
-            BeanDefinition beanDefinition = holder.getBeanDefinition();
+           /* BeanDefinition beanDefinition = holder.getBeanDefinition();
             if(beanDefinition instanceof AnnotatedBeanDefinition){
                 logger.info("11111111111111111111111");
-            }
+            }*/
             definition = (ScannedGenericBeanDefinition) holder.getBeanDefinition();
-
             if (logger.isDebugEnabled()) {
                 logger.debug("Creating FeignClientFactoryBean with name '" + holder.getBeanName()
                         + "' and '" + definition.getBeanClassName() + "' mapperInterface");
             }
             AnnotationMetadata metadata = definition.getMetadata();
-            System.out.println(FeignClient.class.getCanonicalName());
-            System.out.println(FeignClient.class.getName());
             Map<String, Object> attributes = metadata.getAnnotationAttributes(FeignClient.class.getCanonicalName());
             String url = getUrl(attributes);
-            logger.info("exec url:"+url);
+            if (logger.isDebugEnabled()) {
+                logger.info(definition.getBeanClassName() + ":exec url:" + url);
+            }
+            Object fallback = attributes.get("fallback");
+            Object fallbackFactory = attributes.get("fallbackFactory");
+            if (fallback != void.class && fallbackFactory != void.class) {
+                throw new RuntimeException("fallback and fallbackFactory only exist one,not two");
+            }
+            Object retryStatusCode = attributes.get("retryStatusCode");
             // the mapper interface is the original class of the bean
-            // but, the actual class of the bean is MapperFactoryBean
-            definition.getConstructorArgumentValues().addGenericArgumentValue(definition.getBeanClassName()); // 把注解的类名注入到feignClientFactoryBean 的构造方法
+            // but, the actual class of the bean is FeignClientFactoryBean
+            //把注解的类名注入到feignClientFactoryBean 的构造方法
+            definition.getConstructorArgumentValues().addGenericArgumentValue(definition.getBeanClassName()); //
             definition.setBeanClass(this.feignClientFactoryBean.getClass());
             definition.getPropertyValues().add("url", url);
+            definition.getPropertyValues().add("retryStatusCode", retryStatusCode);
+            definition.getPropertyValues().add("fallback", fallback);
+            definition.getPropertyValues().add("fallbackFactory", fallbackFactory);
         }
     }
 
@@ -141,8 +148,7 @@ public class ClasspathFeignScanner extends ClassPathBeanDefinitionScanner {
             }
             try {
                 new URL(url);
-            }
-            catch (MalformedURLException e) {
+            } catch (MalformedURLException e) {
                 throw new IllegalArgumentException(url + " is malformed", e);
             }
         }

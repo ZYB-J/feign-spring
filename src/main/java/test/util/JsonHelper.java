@@ -99,4 +99,5 @@ public class JsonHelper {
     static {
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     }
+
 }
